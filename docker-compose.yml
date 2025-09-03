@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Spring Boot Backend
+  finance-server:
+    build: ./server
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:financedb
+      - JWT_SECRET=your-secret-key-here-make-it-very-long-and-secure-in-production
+      - JWT_EXPIRATION=86400000
+    volumes:
+      - ./server:/app
+    networks:
+      - finance-network
+
+  # Python AI Service
+  finance-ai:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - finance-network
+
+  # React Frontend (will be added later)
+  finance-client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080/api
+      - REACT_APP_AI_SERVICE_URL=http://localhost:8000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - finance-server
+      - finance-ai
+    networks:
+      - finance-network
+
+networks:
+  finance-network:
+    driver: bridge
+
+volumes:
+  finance-data: 
